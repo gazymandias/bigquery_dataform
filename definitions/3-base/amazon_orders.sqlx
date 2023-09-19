@@ -7,7 +7,7 @@ config {
 SELECT
     *
 FROM
-    $ { ref("raw", "amazon_orders") }
+    ${ref("raw", "amazon_orders")}
 
 -- we include this WHERE TRUE statement to ensure that the view will work on Looker Studio
 WHERE TRUE
