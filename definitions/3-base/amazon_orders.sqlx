@@ -1,0 +1,14 @@
+config { 
+    type: "view",
+    description: "View to handle deduplication and assertions",
+    schema: "base",
+    uniqueKey: ["amazon_order_id"] 
+}
+SELECT
+    *
+FROM
+    $ { ref("raw", "amazon_orders") }
+
+-- we include this WHERE TRUE statement to ensure that the view will work on Looker Studio
+WHERE TRUE
+QUALIFY ROW_NUMBER() OVER (PARTITION BY amazon_order_id ORDER BY dt desc) = 1

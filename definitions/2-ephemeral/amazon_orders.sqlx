@@ -1,0 +1,41 @@
+config {
+  type: "view",
+  description: "Materialized view to unnest and flatten raw JSON",
+  schema: "ephemeral",
+  materialized: true
+}
+
+
+SELECT
+  dt,
+  data.amazonOrderId AS amazon_order_id,
+  data.sellerOrderId AS seller_order_id,
+  NULLIF(data.purchaseDate, '1970-01-01T00:00:00Z') AS purchase_date,
+  NULLIF(data.lastUpdateDate, '1970-01-01T00:00:00Z') AS last_update_date,
+  data.orderStatus AS order_status,
+  data.fulfillmentChannel AS fulfillment_channel,
+  data.salesChannel AS sales_channel,
+  data.shipServiceLevel AS ship_service_level,
+  data.orderTotal.currencyCode AS order_total_currency_code,
+  SAFE_CAST(data.orderTotal.amount as NUMERIC) AS order_total_amount,
+  data.numberOfItemsShipped AS number_of_items_shipped,
+  data.numberOfItemsUnshipped AS number_of_items_unshipped,
+  data.paymentMethod AS payment_method,
+  data.marketplaceId as marketplace_id,
+  data.shipmentServiceLevelCategory as shipment_service_level_category,
+  data.orderType as order_type,
+  NULLIF(data.earliestShipDate, '1970-01-01T00:00:00Z') as earliest_ship_date,
+  NULLIF(data.latestShipDate, '1970-01-01T00:00:00Z') as latest_ship_date,
+  data.isBusinessOrder as is_business_order,
+  data.isPrime as is_prime,
+  data.isPremiumOrder as is_premium_order,
+  data.isGlobalExpressEnabled as is_global_express_enabled,
+  data.isReplacementOrder as is_replacement_order,
+  data.isSoldByAB as is_sold_by_ab,
+  data.isISPU as is_ispu,
+  data.isAccessPointOrder as is_access_point_order,
+  data.shippingAddress AS shipping_address,
+  data.buyerInfo AS buyer_info,
+  data.hasRegulatedItems AS has_regulated_items
+FROM
+  ${ref("raw", "amazon_orders")}
