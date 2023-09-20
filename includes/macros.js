@@ -45,8 +45,16 @@ function formatJsonSchema(schemaString) {
     return formatSchema(schemaString.fields);
 }
 
-function getCurrentDate() {
-    let currentDate = new Date().toJSON().slice(0, 10);
-    return currentDate;
+function getCurrentDate(hoursOffset = 0) {
+  let currentDate = new Date();
+  // Check if hoursOffset is negative or positive
+  if (hoursOffset < 0) {
+    // Subtract the absolute value of the negative hours offset (in milliseconds)
+    currentDate.setTime(currentDate.getTime() - Math.abs(hoursOffset) * 60 * 60 * 1000);
+  } else {
+    // Add the positive hours offset (in milliseconds)
+    currentDate.setTime(currentDate.getTime() + hoursOffset * 60 * 60 * 1000);
+  }
+  let formattedDate = currentDate.toJSON().slice(0, 10);
+  return formattedDate;
 }
-
