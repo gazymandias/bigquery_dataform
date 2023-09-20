@@ -165,6 +165,7 @@ operate(table_name)
 	.hasOutput(true)
 	.queries(
 		(ctx) => `
+BEGIN
        LOAD DATA INTO ${ctx.resolve(schema, table_name)} 
 			(\n${macros.formatJsonSchema(schemaString)}\n)
        OVERWRITE PARTITIONS (dt='${macros.getCurrentDate()}')
@@ -178,3 +179,13 @@ operate(table_name)
 		)
        WITH PARTITION COLUMNS(dt DATE)`
 	);
+
+EXCEPTION WHEN ERROR THEN
+IF @@error.message like '%cannot query hive partitioned data for table%without any associated files%' THEN
+SELECT (@@error.message) as message;
+ELSE
+RAISE USING MESSAGE = (@@error.message);
+END IF;
+END;
+
+
