@@ -177,8 +177,7 @@ BEGIN
         	uris = ['${uri}dt=${macros.getCurrentDate()}*.data'],
 			ignore_unknown_values = TRUE 
 		)
-       WITH PARTITION COLUMNS(dt DATE)`
-	);
+       WITH PARTITION COLUMNS(dt DATE);
 
 EXCEPTION WHEN ERROR THEN
 IF @@error.message like '%cannot query hive partitioned data for table%without any associated files%' THEN
@@ -188,4 +187,6 @@ RAISE USING MESSAGE = (@@error.message);
 END IF;
 END;
 
+`
+);
 
