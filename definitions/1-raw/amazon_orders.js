@@ -6,7 +6,7 @@ const forceFullDataLoad = dataform.projectConfig.vars.forceFullDataLoad;
 const currentDate = forceFullDataLoad === 'true' ? '' : functions.getCurrentDate();
 const overrideLoadDate = dataform.projectConfig.vars.overrideLoadDate;
 const loadDate = overrideLoadDate ? overrideLoadDate : currentDate;
-const overwritePartitions = forceFullDataLoad === 'true' ? '' : OVERWRITE PARTITIONS (dt = '${loadDate}');
+const overwritePartitions = forceFullDataLoad === 'true' ? '' : `OVERWRITE PARTITIONS (dt = '${loadDate}')`;
 
 
 operate(tableName)
