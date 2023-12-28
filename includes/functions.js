@@ -1,6 +1,7 @@
 module.exports = {
     formatJsonSchema,
-    getCurrentDate
+    getCurrentDate,
+    csvToSqlSelect
 };
 
 function formatSchema(fields, level = 0) {
@@ -57,4 +58,30 @@ function getCurrentDate(hoursOffset = 0) {
   }
   let formattedDate = currentDate.toJSON().slice(0, 10);
   return formattedDate;
+}
+
+function csvToSqlSelect(csvData) {
+    // Split the CSV data into rows
+    const rows = csvData.split('\n').map(row => row.trim());
+
+    // Extract header and data rows
+    const header = rows[0].split(',');
+    const dataRows = rows.slice(1);
+
+    // Helper function to check if all values in a column are numeric (determines whether we add quotes)
+    const isColumnNumeric = (columnIndex) => {
+        return dataRows.every(row => {
+            const value = row.split(',')[columnIndex].trim();
+            return !isNaN(parseFloat(value)) && isFinite(value);
+        });
+    };
+
+    // Convert CSV data to SQL SELECT statement, replaces empty strings (NOT INTS) with NULL
+    const sqlSelect = `SELECT\n  *\nFROM\n  UNNEST(\n    [STRUCT\n${dataRows.map((row, rowIndex) => `    (${row.split(',').map((val, colIndex) => {
+        const useQuotes = !isColumnNumeric(colIndex);
+        return `${useQuotes ? "NULLIF('" : ''}${ val }${ useQuotes? "', '')" : ''}${rowIndex === 0 ? ` AS ${header[colIndex]}` : ''
+} `;
+    }).join(', ')})).join(',\n')}\n    ]\n  )`;
+
+  return sqlSelect;
 }

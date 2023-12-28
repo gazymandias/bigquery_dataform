@@ -10,7 +10,7 @@ const overwritePartitions = forceFullDataLoad === 'true' ? '' : `OVERWRITE PARTI
 
 
 operate(tableName)
-	.tags(['amazon'])
+	.tags(['amazon'])              
 	.schema(schema)
 	.hasOutput(true)
 	.queries(
