@@ -33,8 +33,6 @@ The process here is therefore;
 
 ## Replication of the **dbt** 'seed' function in **Dataform**
 
-Replication of the seed function in **dbt**
-
 The idea here was to attempt to replicate the functionality inbuilt to dbt for creating tables from csv files.
 
 1. save the csv data in a file under seeds/ - this must be in the format (unfortunately we need the additional code for this to work..);
