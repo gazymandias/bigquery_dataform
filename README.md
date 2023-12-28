@@ -35,7 +35,7 @@ The process here is therefore;
 
 The idea here was to attempt to replicate the functionality inbuilt to dbt for creating tables from csv files.
 
-1. save the csv data in a file under seeds/ - this must be in the format (unfortunately we need the additional code for this to work..);
+1. save the csv data in a file under seeds/ - this must be in the format below inside a js constant wrapper unfortunately;
 
 #### **`seeds/example.csv`**
 ``` js 
