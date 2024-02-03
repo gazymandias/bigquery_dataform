@@ -7,6 +7,7 @@ const currentDate = forceFullDataLoad === 'true' ? '' : functions.getCurrentDate
 const overrideLoadDate = dataform.projectConfig.vars.overrideLoadDate;
 const loadDate = overrideLoadDate ? overrideLoadDate : currentDate;
 const overwritePartitions = forceFullDataLoad === 'true' ? '' : `OVERWRITE PARTITIONS (dt = '${loadDate}')`;
+const overwriteOrInto = forceFullDataLoad === 'true' ? 'OVERWRITE' : 'INTO';
 
 
 operate(tableName)
@@ -16,7 +17,7 @@ operate(tableName)
 	.queries(
 		(ctx) => `
     BEGIN
-		LOAD DATA INTO ${ctx.resolve(schema, tableName)}
+		LOAD DATA ${overwriteOrInto} ${ctx.resolve(schema, tableName)}
 		(\n${functions.formatJsonSchema(schemaString)}\n)
 		${overwritePartitions}
 		PARTITION BY dt 
@@ -29,7 +30,7 @@ operate(tableName)
 		WITH PARTITION COLUMNS(dt DATE);
 
 	EXCEPTION WHEN ERROR THEN
-	IF @@error.message like '%cannot query hive partitioned data for table%without any associated files%' THEN
+	IF lower(@@error.message) like '%cannot query hive partitioned data for table%without any associated files%' THEN
 	SELECT (@@error.message) as message;
 	ELSE
 	RAISE USING MESSAGE = (@@error.message);
