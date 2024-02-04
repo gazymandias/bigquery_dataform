@@ -5,6 +5,12 @@ config {
     uniqueKey: ["amazon_order_id"] 
 }
 
+with unioned as (
+    select * from ${ref("ephemeral", "amazon_orders_speed")}
+    union all
+    select * from ${ref("ephemeral", "amazon_orders_batch")}
+)
+
 SELECT
   dt,
   data.amazonOrderId AS amazon_order_id,
@@ -37,7 +43,7 @@ SELECT
   data.buyerInfo AS buyer_info,
   data.hasRegulatedItems AS has_regulated_items
 FROM
-  ${ref("ephemeral", "amazon_orders")}
+  unioned
 
 -- we include this WHERE TRUE statement to ensure that the view will work on Looker Studio
 WHERE TRUE
