@@ -1,6 +1,6 @@
 config { 
     type: "view",
-    description: "View to handle flattening, deduplication and assertions",
+    description: "View to handle unioning of speed and batch layers, flattening, deduplication and assertions",
     schema: "base",
     uniqueKey: ["amazon_order_id"] 
 }
