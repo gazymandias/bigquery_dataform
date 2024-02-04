@@ -8,4 +8,4 @@ config {
 SELECT
   *
 FROM
-  ${ref("raw", "amazon_orders")}
+  ${ref("raw", "amazon_orders_batch")}
