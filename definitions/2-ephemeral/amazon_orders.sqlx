@@ -2,7 +2,10 @@ config {
   type: "view",
   description: "Materialized view to recluster (if applicable) the raw data from LOAD DATA INTO",
   schema: "ephemeral",
-  materialized: true
+  materialized: true,
+  bigquery: {
+    clusterBy: ["id"]
+  }
 }
 
 SELECT
