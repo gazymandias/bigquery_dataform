@@ -9,6 +9,7 @@ config {
 }
 
 SELECT
+  metadata.id as id,
   *
 FROM
   ${ref("raw", "amazon_orders_batch")}
