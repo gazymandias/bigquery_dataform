@@ -4,6 +4,7 @@ const schema = "raw"
 const uri = "gs://<BUCKET_NAME>/AMAZON/ORDERS/"
 const forceFullDataLoad = dataform.projectConfig.vars.forceFullDataLoad;
 const currentDate = forceFullDataLoad === 'true' ? '' : functions.getCurrentDate();
+const yesterdayDate = functions.getCurrentDate(hoursOffset=-24);
 const overrideLoadDate = dataform.projectConfig.vars.overrideLoadDate;
 const loadDate = overrideLoadDate ? overrideLoadDate : currentDate;
 const overwritePartitions = forceFullDataLoad === 'true' ? '' : `OVERWRITE PARTITIONS (dt = '${loadDate}')`;
@@ -25,7 +26,7 @@ operate(tableName+'_speed')
   			format = 'JSON',
   		    	hive_partition_uri_prefix = '${uri}',
 			uris = ['${uri}dt=${loadDate}*.data'],
-			ignore_unknown_values = TRUE 
+			ignore_unknown_values = TRUE,
 		  	require_hive_partition_filter = FALSE
 		);
 
@@ -58,7 +59,7 @@ operate(tableName+'_batch')
 		FROM FILES ( 
   			format = 'JSON',
 			hive_partition_uri_prefix = '${uri}',
-			uris = ['${uri}dt=${loadDate}*.data'],
+			uris = ['${uri}dt=${yesterdayDate}*.data'],
 			ignore_unknown_values = TRUE 
 		)
 		WITH PARTITION COLUMNS(dt DATE);
