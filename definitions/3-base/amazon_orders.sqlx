@@ -1,14 +1,22 @@
 config { 
     type: "view",
-    description: "View to handle unioning of speed and batch layers, flattening, deduplication and assertions",
+    description: "View to handle unioning of speed and batch layers, flattening, deduplication and assertions. Assumes id is insiden the file name of objects in gcs.",
     schema: "base",
     uniqueKey: ["amazon_order_id"] 
 }
 
 with unioned as (
-    select * from ${ref("ephemeral", "amazon_orders_speed")}
+    select 
+        dt,
+        SPLIT(SPLIT(_FILE_NAME,'id:')[SAFE_OFFSET(1)],'/')[SAFE_OFFSET(0)] as id, 
+        data 
+    from ${ref("ephemeral", "amazon_orders_speed")}
     union all
-    select * from ${ref("ephemeral", "amazon_orders_batch")}
+    select 
+        dt,
+        id, 
+        data 
+    from ${ref("ephemeral", "amazon_orders_batch")}
 )
 
 SELECT
@@ -45,6 +53,6 @@ SELECT
 FROM
   unioned
 
--- we include this WHERE TRUE statement to ensure that the view will work on Looker Studio
+-- we include this WHERE TRUE statement to ensure that the view will work on Looker Studio. We can filter downstream with id and it will efficiently filter
 WHERE TRUE
-QUALIFY ROW_NUMBER() OVER (PARTITION BY amazon_order_id ORDER BY dt desc) = 1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY id, amazon_order_id ORDER BY dt desc) = 1
