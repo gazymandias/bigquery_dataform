@@ -1,7 +1,7 @@
 module.exports = {
     formatJsonSchema,
     getCurrentDate,
-    csvToSqlSelect
+    getCsvSeed
 };
 
 function formatSchema(fields, level = 0) {
@@ -60,28 +60,89 @@ function getCurrentDate(hoursOffset = 0) {
   return formattedDate;
 }
 
-function csvToSqlSelect(csvData) {
-    // Split the CSV data into rows
-    const rows = csvData.split('\n').map(row => row.trim());
+function getCsvSeed(csvData, headerTypes = None) {
+    const parseCSV = csv => {
+        const rows = csv.trim().split('\n').map(row => row.trim());
+        return rows.map(row => {
+            const cells = [];
+            let currentCell = '';
+            let insideQuotes = false;
+            let quoteChar = '';
 
-    // Extract header and data rows
-    const header = rows[0].split(',');
-    const dataRows = rows.slice(1);
+            for (let i = 0; i < row.length; i++) {
+                const char = row[i];
 
-    // Helper function to check if all values in a column are numeric (determines whether we add quotes)
-    const isColumnNumeric = (columnIndex) => {
-        return dataRows.every(row => {
-            const value = row.split(',')[columnIndex].trim();
-            return !isNaN(parseFloat(value)) && isFinite(value);
+                if (!insideQuotes && char === ',') {
+                    cells.push(currentCell);
+                    currentCell = '';
+                } else {
+                    if (!insideQuotes && (char === '"' || char === "'")) {
+                        insideQuotes = true;
+                        quoteChar = char;
+                    } else if (insideQuotes && char === quoteChar) {
+                        insideQuotes = false;
+                        quoteChar = '';
+                    } else if (insideQuotes && char === '\\' && row[i + 1] === quoteChar) {
+                        currentCell += quoteChar;
+                        i++;
+                        continue;
+                    } else {
+                        currentCell += char === '"' ? "'" : char;
+                    }
+                }
+            }
+
+            cells.push(currentCell.replace(new RegExp(`${quoteChar}`, 'g'), ''));
+
+            return cells.map(cell => cell.trim());
         });
     };
 
-    // Convert CSV data to SQL SELECT statement, replaces empty strings (NOT INTS) with NULL
-    const sqlSelect = `SELECT\n  *\nFROM\n  UNNEST(\n    [STRUCT\n${dataRows.map((row, rowIndex) => `    (${row.split(',').map((val, colIndex) => {
-        const useQuotes = !isColumnNumeric(colIndex);
-        return `${useQuotes ? "NULLIF('" : ''}${ val }${ useQuotes? "', '')" : ''}${rowIndex === 0 ? ` AS ${header[colIndex]}` : ''
-} `;
-    }).join(', ')})).join(',\n')}\n    ]\n  )`;
+    const getTypeMapping = (header, headerTypes) => {
+        const typeMapping = {};
+        header.forEach(headerName => typeMapping[headerName] = (headerTypes[headerName] || 'STRING').toUpperCase());
+        return typeMapping;
+    };
 
-  return sqlSelect;
+    const formatDate = (dateString) => {
+        const [day, month, year] = dateString.split('/');
+        return `${year}-${month}-${day}`;
+    };
+
+    const isColumnNumericOrBool = columnIndex => rows.slice(1).every(row => {
+        const value = row[columnIndex].trim().toLowerCase();
+        return !isNaN(Number(value)) || ['true', 'false', '', 'null'].includes(value);
+    });
+
+    const generateRowValues = (row, header, isFirstRow, typeMapping) => {
+        return row.map((cell, colIndex) => {
+            const cellType = typeMapping[header[colIndex]];
+            const safeCast = value => `SAFE_CAST(${value} AS ${cellType})`;
+
+            if (isFirstRow) {
+                if (cell === '') return `${safeCast("NULL")} AS ${header[colIndex]}`;
+                if (cellType === 'DATE') return `${safeCast(`DATE("${formatDate(cell)}")`)} AS ${header[colIndex]}`;
+                return `${isColumnNumericOrBool(colIndex) ? safeCast(cell) : safeCast(`"${cell}"`)} AS ${header[colIndex]}`;
+            } else {
+                if (cell === '') return safeCast("NULL");
+                if (cellType === 'DATE') return safeCast(`DATE("${formatDate(cell)}")`);
+                return isColumnNumericOrBool(colIndex) ? safeCast(cell) : safeCast(`"${cell}"`);
+            }
+        });
+    };
+
+    const generateSQLSelect = (header, rows, typeMapping) => {
+        const columnDefinitions = header.map(col => col).join(',\n\t');
+        const dataRowsSQL = rows.slice(1).map((row, rowIndex) => {
+            const isFirstRow = rowIndex === 0;
+            return `(${generateRowValues(row, header, isFirstRow, typeMapping).join(', ')})`;
+        }).join(',\n\t\t\t');
+        return `SELECT\n\t${columnDefinitions}\nFROM\n\tUNNEST(\n\t\t[STRUCT\n\t\t\t${dataRowsSQL}\n\t\t]\n\t)`;
+    };
+
+    const rows = parseCSV(csvData);
+    const header = rows[0].map(cell => cell.toLowerCase().replace(/\s+/g, '_'));
+    const typeMapping = getTypeMapping(header, headerTypes);
+    const sqlSelect = generateSQLSelect(header, rows, typeMapping);
+    return sqlSelect;
 }
