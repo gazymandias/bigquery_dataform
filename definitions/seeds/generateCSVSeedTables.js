@@ -1,15 +1,26 @@
-const seedNames = ["example"];
+const seedNames = [
+    {
+        name: "example.js",
+        description: "a clear concise descripton",
+        headers: {
+            name: 'STRING',
+            colour: 'STRING',
+            age: 'INT64'
+        }
+    }
+];
 
 seedNames.forEach(seedNames => {
-    publish(seedNames, {
-        type: "table",
-        schema: "reference",
-        tags: ["seeds"]
-    })
+		publish(seedNames.name, {
+			type: "table",
+			description: seedNames.description,
+			schema: "reference",
+			tags: ["seeds"]
+		})
         .query(
             ctx => {
-                let seedPath = "./" + seedNames + ".csv";
-                return ${functions.csvToSqlSelect(require(seedPath))}
+                let seedPath = "./" + seedNames.name;
+                return `${functions.getCsvSeed(require(seedPath), seedNames.headers ? seedNames.headers : 'None')}`
             }
         );
 });
