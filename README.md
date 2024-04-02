@@ -33,7 +33,9 @@ The process here is therefore;
 
 ## Replication of the **dbt** 'seed' function in **Dataform**
 
-The idea here was to attempt to replicate the functionality inbuilt to dbt for creating tables from csv files - this allows creations of seeds (which do not exist as of writing) in Dataform in seconds!
+An (over-engineered?) attempt to replicate the functionality inbuilt to dbt for creating tables from csv files (known as **seeds**).
+
+This code allows you to create Dataform tables from csv data in seconds!
 
 1. save the csv data in a file under seeds/ - this must be in the format below inside a js constant wrapper unfortunately;
 
