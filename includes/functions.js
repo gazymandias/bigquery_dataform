@@ -1,7 +1,7 @@
 module.exports = {
     formatJsonSchema,
     getCurrentDate,
-    getCsvSeed
+    getCsvSeedQuery
 };
 
 function formatSchema(fields, level = 0) {
@@ -60,9 +60,31 @@ function getCurrentDate(hoursOffset = 0) {
   return formattedDate;
 }
 
-function getCsvSeed(csvData, headerTypes = None) {
+
+function getCsvSeedQuery(csvData, headerTypes = None) {
     const parseCSV = csv => {
-        const rows = csv.trim().split('\n').map(row => row.trim());
+        const rows = [];
+        let currentRow = '';
+        let insideQuotes = false;
+
+        for (let i = 0; i < csv.length; i++) {
+            const char = csv[i];
+
+            if (char === '\n' && !insideQuotes) {
+                rows.push(currentRow.replace(/\n+/g, ' ').trim());
+                currentRow = '';
+            } else {
+                currentRow += char;
+                if (char === '"' || char === "'") {
+                    insideQuotes = !insideQuotes;
+                }
+            }
+        }
+
+        if (currentRow.trim().length > 0) {
+            rows.push(currentRow.replace(/\n+/g, ' ').trim());
+        }
+        // const rows = csv.trim().split('\n').map(row => row.trim());
         return rows.map(row => {
             const cells = [];
             let currentCell = '';
@@ -100,12 +122,37 @@ function getCsvSeed(csvData, headerTypes = None) {
 
     const getTypeMapping = (header, headerTypes) => {
         const typeMapping = {};
-        header.forEach(headerName => typeMapping[headerName] = (headerTypes[headerName] || 'STRING').toUpperCase());
+        header.forEach((headerName, index) => {
+            if (headerTypes && headerTypes[headerName]) {
+                typeMapping[headerName] = headerTypes[headerName].toUpperCase();
+            } else {
+                const columnValues = rows
+                    .slice(1)
+                    .map((row) => row[index].trim().toLowerCase());
+                const allNumeric = columnValues.every((value) => !isNaN(Number(value)));
+                const allBool = columnValues.every((value) =>
+                    ["true", "false", "", "null"].includes(value),
+                );
+                const allDate = columnValues.every(
+                    (value) => !value || /^\d{4}[-/]\d{2}[-/]\d{2}$/.test(value),
+                );
+
+                if (allNumeric) {
+                    typeMapping[headerName] = "NUMERIC";
+                } else if (allBool) {
+                    typeMapping[headerName] = "BOOL";
+                } else if (allDate) {
+                    typeMapping[headerName] = "DATE";
+                } else {
+                    typeMapping[headerName] = "STRING";
+                }
+            }
+        });
         return typeMapping;
     };
 
     const formatDate = (dateString) => {
-        const [day, month, year] = dateString.split('/');
+        const [year, month, day] = dateString.split(/[\/\-\.]/);
         return `${year}-${month}-${day}`;
     };
 
@@ -131,6 +178,17 @@ function getCsvSeed(csvData, headerTypes = None) {
         });
     };
 
+    const getCleanHeaders = (headerRow) => {
+        let customFieldIndex = 0;
+        return headerRow.map(cell => {
+            if (!cell.trim()) {
+                return `custom_field_${customFieldIndex++}`;
+            } else {
+                return cell.toLowerCase().replace(/\s+/g, '_');
+            }
+        })
+    };
+
     const generateSQLSelect = (header, rows, typeMapping) => {
         const columnDefinitions = header.map(col => col).join(',\n\t');
         const dataRowsSQL = rows.slice(1).map((row, rowIndex) => {
@@ -141,8 +199,8 @@ function getCsvSeed(csvData, headerTypes = None) {
     };
 
     const rows = parseCSV(csvData);
-    const header = rows[0].map(cell => cell.toLowerCase().replace(/\s+/g, '_'));
-    const typeMapping = getTypeMapping(header, headerTypes);
-    const sqlSelect = generateSQLSelect(header, rows, typeMapping);
+    const headers = getCleanHeaders(rows[0])
+    const typeMapping = getTypeMapping(headers, headerTypes);
+    const sqlSelect = generateSQLSelect(headers, rows, typeMapping);
     return sqlSelect;
 }

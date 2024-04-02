@@ -6,4 +6,4 @@ const seed = `
     dave,purple,7
     ash,black,1
 `;
-module.exports = seed.trim();
+module.exports = seed.trim();

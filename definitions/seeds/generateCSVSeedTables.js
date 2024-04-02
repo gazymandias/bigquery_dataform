@@ -20,7 +20,7 @@ seedNames.forEach(seedNames => {
         .query(
             ctx => {
                 let seedPath = "./" + seedNames.name;
-                return `${functions.getCsvSeed(require(seedPath), seedNames.headers ? seedNames.headers : 'None')}`
+                return `${functions.getCsvSeedQuery(require(seedPath), seedNames.headers ? seedNames.headers : 'None')}`
             }
         );
 });

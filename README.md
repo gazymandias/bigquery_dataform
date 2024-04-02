@@ -50,7 +50,11 @@ const seed = `
 module.exports = seed.trim();
 ```
 
-2. Add a new entry to the seedNames array; this is an object containing the name (required), description and headers (optional). This will automatically create the new seed table based on the data provided using the **getCsvSeed** function. The function will automatically clean the csv (e.g. removing spaces from headers), safe cast the values to the appropriate Type and clean quotations to ensure creation of a clean table 'seed'.
+2. Add a new entry to the seedNames array; this is an object containing the name (required), description and headers (optional). 
+
+This will automatically create the new seed table based on the data provided using the **getCsvSeedQuery** function. 
+
+The function will automatically clean the csv (e.g. removing spaces from headers), safe cast the values to the appropriate Type (**it will infer the type where not explicitly stated**) and clean quotations to ensure creation of a clean table 'seed'.
 
 This means you can copy and paste data directly from a csv into the source .js file without having to mess around quoting each entry (the bigger the seed the more annoying this is!).
 
@@ -78,7 +82,7 @@ seedNames.forEach(seedNames => {
         .query(
             ctx => {
                 let seedPath = "./" + seedNames.name;
-                return `${functions.getCsvSeed(require(seedPath), seedNames.headers ? seedNames.headers : 'None')}`
+                return `${functions.getCsvSeedQuery(require(seedPath), seedNames.headers ? seedNames.headers : 'None')}`
             }
         );
 });
