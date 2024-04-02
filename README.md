@@ -37,7 +37,7 @@ An (over-engineered?) attempt to replicate the functionality inbuilt to dbt for 
 
 This code allows you to create Dataform tables from csv data in seconds!
 
-1. save the csv data in a file under seeds/ - this must be in the format below inside a js constant wrapper unfortunately;
+1. save the csv data in a file under *seeds/* - the csv contents must be pasted inside a js constant wrapper though this function can handle quotes or not;
 
 #### **`seeds/example.csv`**
 ``` js 
